@@ -8,3 +8,7 @@ python main.py
 ```
 add below options:
 --center for center loss
+
+
+vanilla: 57.894
+w/ center_loss: 59.231
