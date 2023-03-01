@@ -5,7 +5,6 @@ from torch.utils.data import DataLoader
 
 import torch
 import os
-import sys
 import argparse
 import datetime
 import time
@@ -15,12 +14,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
 
-import torch
 import torch.nn as nn
-
-import torch.backends.cudnn as cudnn
-
-import datasets
 
 #code adapted from: https://github.com/KaiyangZhou/pytorch-center-loss
 class CenterLoss(nn.Module):
@@ -38,7 +32,7 @@ class CenterLoss(nn.Module):
                   torch.pow(self.centers, 2).sum(dim=1, keepdim=True).expand(self.num_classes, 
                                                                                     batch_size).t()
         distmat.addmm_(x, self.centers.t(), beta=1, alpha=-2)
-
+      
         classes = torch.arange(self.num_classes).long()
         classes = classes.cuda()
         labels = labels.unsqueeze(1).expand(batch_size, self.num_classes)
