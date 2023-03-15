@@ -1,6 +1,6 @@
 # KCI2023
 
-<h1>Facial expression recognition via large pre-trained model with center loss</h1>
+<h1>Learning emotion-related discriminative features for facial expressions with center loss</h1>
 
 run as follows:
 ```
