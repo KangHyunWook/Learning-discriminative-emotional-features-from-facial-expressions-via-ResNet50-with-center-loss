@@ -12,10 +12,10 @@ add below options:
 
 <h2>Experimental results</h2>
 Classification accuracy
-<table align='center'>
-  <tr><td>dataset</td><td>vanilla</td><td>w/ center loss</td></tr>
-  <tr><td>RAF-DB</td><td>76.235</td><td>77.146</td></tr>
-  <tr><td>FER2013</td><td></td></tr>
+<table>
+  <tr align='center'><td>dataset</td><td>vanilla</td><td>w/ center loss</td></tr>
+  <tr align='center'><td>RAF-DB</td><td>76.235</td><td>77.146</td></tr>
+  <tr align='center'><td>FER2013</td><td></td></tr>
 </table>
 vanilla: 57.894
 w/ center_loss: 59.231
