@@ -12,7 +12,7 @@ add below options:
 
 <h2>Experimental results</h2>
 <table>
-<tr><td>77.146</td></tr>
+  <tr><td>RAF-DB</td><td>77.146</td></tr>
 <tr><td></td></tr>
 </table>
 vanilla: 57.894
