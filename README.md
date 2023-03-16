@@ -1,6 +1,6 @@
 # KCI2023
 
-<h1>Learning emotion-related discriminative features from facial expressions with center loss</h1>
+<h1>Learning discriminative emotional features from facial expressions via ResNet50 with center loss</h1>
 
 run as follows:
 ```
