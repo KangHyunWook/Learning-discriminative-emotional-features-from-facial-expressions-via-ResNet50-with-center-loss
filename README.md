@@ -17,5 +17,6 @@ Classification accuracy
   <tr align='center'><td>RAF-DB</td><td>76.235</td><td>77.146</td></tr>
   <tr align='center'><td>FER2013</td><td></td></tr>
 </table>
-vanilla: 57.894
-w/ center_loss: 59.231
+
+
+FER2013 datset: https://www.kaggle.com/datasets/msambare/fer2013
