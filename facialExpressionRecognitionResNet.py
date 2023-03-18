@@ -1,5 +1,7 @@
 from collections import namedtuple
+from config import get_config
 
+import os
 import torch.nn as nn
 import torch
 import torchvision.transforms as transforms
@@ -172,8 +174,6 @@ class ResNet(nn.Module):
 
         self.fc = nn.Linear(self.in_channels, output_dim)
 
-
-
     def get_resnet_layer(self, block, n_blocks, channels, stride=1):
         layers = []
 
@@ -208,24 +208,16 @@ class ResNet(nn.Module):
 
         return h, x
 
-import argparse
+train_config = get_config(mode='train')
+test_config = get_config(mode='test')
 
-parser = argparse.ArgumentParser("Center Loss Example")
-
-parser.add_argument('--lr-model', type=float, default=1e-3, help="learning rate for model")
-parser.add_argument('--lr-cent', type=float, default=1e-3, help="learning rate for center loss")
-parser.add_argument('--center', action='store_true', help='activate center loss')
-
-args = parser.parse_args()
-
-train_dir = r'/media/jeff/external/data/RAF-DB/train'
-test_dir=r'/media/jeff/external/data/RAF-DB/test'
+train_dir = os.path.join(train_config.data_folder, train_config.mode)
+test_dir = os.path.join(test_config.data_folder, test_config.mode)
 
 
 '''
 calculate means and stds for normalization.
 '''
-
 
 # train_data = datasets.ImageFolder(root=train_dir,
 #                                 transform = transforms.ToTensor())
@@ -283,18 +275,15 @@ OUTPUT_DIM = len(test_data.classes)
 
 model = ResNet(resnet50_config, OUTPUT_DIM)
 
-pretrained_model = models.resnet50(pretrained = True)
-IN_FEATURES = pretrained_model.fc.in_features
+pretrained_model=models.resnet50(pretrained=True)
 
-
-fc = nn.Linear(IN_FEATURES, OUTPUT_DIM)
-pretrained_model.fc = fc
+pretrained_model.fc=nn.Linear(2048, OUTPUT_DIM)
 
 model.load_state_dict(pretrained_model.state_dict())
 
 model = nn.DataParallel(model).cuda()
 
-EPOCHS = 30
+EPOCHS = 50
 BATCH_SIZE=64
 
 n = len(train_data)  # total number of examples
@@ -320,15 +309,13 @@ num_trials=1
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-optimizer_model = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr_model)
+optimizer_model = train_config.optimizer(filter(lambda p: p.requires_grad, model.parameters()), lr=train_config.lr_model)
 
 criterion = nn.CrossEntropyLoss(reduction='mean')
 
 criterion_cent = CenterLoss(num_classes=OUTPUT_DIM, feat_dim=2048)
 
-optimizer_centloss = optim.Adam(criterion_cent.parameters(), lr = args.lr_cent)
-
-cent_weight=0.6
+optimizer_centloss = optim.Adam(criterion_cent.parameters(), lr = train_config.lr_cent)
 
 for epoch in range(EPOCHS):
     model.train()
@@ -341,22 +328,22 @@ for epoch in range(EPOCHS):
         features, outputs = model(data)
         loss_xent = criterion(outputs, labels)
 
-        if args.center:
+        if train_config.center:
             loss_cent = criterion_cent(features, labels)
-            loss = loss_xent + loss_cent*cent_weight
+            loss = loss_xent + loss_cent*train_config.cent_weight
         else:
             loss = loss_xent
 
         optimizer_model.zero_grad()
-        if args.center:
+        if train_config.center:
             optimizer_centloss.zero_grad()
 
         loss.backward()
         optimizer_model.step()
 
-        if args.center:
+        if train_config.center:
             for param in criterion_cent.parameters():
-                param.grad.data *= (1. / cent_weight)
+                param.grad.data *= (1.8 / train_config.cent_weight)
             optimizer_centloss.step()
 
         # torch.nn.utils.clip_grad_value_([param for param in model.parameters()
@@ -427,6 +414,13 @@ for epoch in range(EPOCHS):
             epoch_test_loss/=len(testloader)
             epoch_test_acc/=len(testloader)
         print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, 100*epoch_test_acc))
+
+        epoch_test_acc*=100
+        f=open('results.csv','w')
+        f.write('test_loss\ttest_acc\n')
+        f.write(str(np.round(epoch_test_loss.detach().cpu().numpy(),2))+'\t'+str(np.round(epoch_test_acc,3)))
+        f.close()
+
         exit()
 
 model.load_state_dict(torch.load('model.ckpt'))
