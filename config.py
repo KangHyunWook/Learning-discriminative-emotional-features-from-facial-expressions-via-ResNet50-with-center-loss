@@ -23,7 +23,7 @@ def get_config(parse=True, **optional_kwargs):
     parser.add_argument('--center', action='store_true', help='activate center loss')
     parser.add_argument('--optimizer', type=str, default='Adam')
     parser.add_argument('--data-folder', type=str, required=True)
-    parser.add_argument('--cent-weight', type=float, default=0.1)
+    parser.add_argument('--cent-weight', type=float, default=0.2)
 
     if parse:
         kwargs = parser.parse_args()

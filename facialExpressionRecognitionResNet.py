@@ -297,6 +297,7 @@ n_list=shuffle(np.arange(n))
 dev_data = torch.utils.data.Subset(train_data, n_list[:n_dev])  # take first 10%
 train_data = torch.utils.data.Subset(train_data, n_list[n_dev:])  # take the rest
 
+
 trainloader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=False)
 devloader = DataLoader(dev_data, batch_size = BATCH_SIZE, shuffle = False)
 testloader = DataLoader(test_data, batch_size = BATCH_SIZE, shuffle = False)
