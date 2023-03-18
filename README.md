@@ -18,5 +18,4 @@ Classification accuracy
   <tr align='center'><td>FER2013</td><td>62.138</td><td>62.572</td></tr>
 </table>
 
-
 FER2013 datset: https://www.kaggle.com/datasets/msambare/fer2013
