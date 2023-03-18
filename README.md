@@ -13,7 +13,7 @@ add below options:
 <h2>Experimental results</h2>
 Classification accuracy
 
-<table style="background-color:rgba(0, 0, 0, 0);">
+<table>
   <tr align='center'><td>dataset</td><td>vanilla</td><td>w/ center loss</td></tr>
   <tr align='center'><td>RAF-DB</td><td>76.235</td><td>77.467</td></tr>
   <tr align='center'><td>FER2013</td><td>62.138</td><td>62.572</td></tr>  
