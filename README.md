@@ -14,8 +14,8 @@ add below options:
 Classification accuracy
 <table>
   <tr align='center'><td>dataset</td><td>vanilla</td><td>w/ center loss</td></tr>
-  <tr align='center'><td>RAF-DB</td><td>76.235</td><td>77.146</td></tr>
-  <tr align='center'><td>FER2013</td><td></td></tr>
+  <tr align='center'><td>RAF-DB</td><td>76.235</td><td>77.467</td></tr>
+  <tr align='center'><td>FER2013</td><td>62.138</td><td>62.572</td></tr>
 </table>
 
 
