@@ -1,5 +1,6 @@
 from collections import namedtuple
 from config import get_config
+from sklearn.decomposition import PCA
 
 import os
 import torch.nn as nn
@@ -9,6 +10,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 from torch.utils.data import DataLoader
 import numpy as np
+import matplotlib.pyplot as plt
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -203,16 +205,88 @@ class ResNet(nn.Module):
         x = self.layer4(x)
 
         x = self.avgpool(x)
+
         h = x.view(x.shape[0], -1)
         x = self.fc(h)
 
         return h, x
 
 train_config = get_config(mode='train')
+dev_config = get_config(mode='dev')
 test_config = get_config(mode='test')
+test_config.batch_size=1
+
+DATA_NAME=train_config.data_folder.split(os.path.sep)[-1]
 
 train_dir = os.path.join(train_config.data_folder, train_config.mode)
 test_dir = os.path.join(test_config.data_folder, test_config.mode)
+
+def getPathList(root):
+    items = os.listdir(root)
+    pathList=[]
+    for item in items:
+        full_path = os.path.join(root, item)
+        if os.path.isfile(full_path):
+            pathList.append(full_path)
+        else:
+            pathList.extend(getPathList(full_path))
+
+    return pathList
+
+def evaluate(dataloader, is_load=True):
+
+    if is_load:
+        model.load_state_dict(torch.load('model.ckpt'))
+
+    model.eval()
+    with torch.no_grad():
+        total = 0
+        epoch_loss = 0.0
+        epoch_acc=0.0
+
+        for data, labels in dataloader:
+            data = data.to(device)
+            labels = labels.to(device)
+            _, outputs= model(data)
+
+            preds = torch.argmax(outputs, dim=1)
+
+            correct = (preds==labels).sum().item()
+
+            acc = correct/data.shape[0]
+
+            loss = criterion(outputs, labels)
+            epoch_loss += loss
+            epoch_acc += acc
+
+        epoch_loss/=len(dataloader)
+        epoch_acc/=len(dataloader)
+
+    epoch_acc*=100
+
+    return epoch_loss, epoch_acc
+
+    #
+    #
+    # f=open('results.csv','w')
+    # f.write('test_loss\ttest_acc\n')
+    # f.write(str(np.round(epoch_test_loss.detach().cpu().numpy(),2))+'\t'+str(np.round(epoch_test_acc,3)))
+    # f.close()
+
+
+# pathList=getPathList(train_config.data_folder)
+#
+# print(len(pathList))
+# emo_count_map={}
+# for path in pathList:
+#     emo=path.split(os.path.sep)[-2]
+#     if emo not in emo_count_map:
+#         emo_count_map[emo]=1
+#     else:
+#         emo_count_map[emo]+=1
+#
+# print(emo_count_map)
+# exit()
 
 
 '''
@@ -261,7 +335,6 @@ train_data = datasets.ImageFolder(root=train_dir, transform = train_transforms)
 
 test_data = datasets.ImageFolder(root = test_dir, transform = test_transforms)
 
-
 SEED = 336
 torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
@@ -277,14 +350,15 @@ model = ResNet(resnet50_config, OUTPUT_DIM)
 
 pretrained_model=models.resnet50(pretrained=True)
 
-pretrained_model.fc=nn.Linear(2048, OUTPUT_DIM)
+IN_FEATURES=pretrained_model.fc.in_features
+
+pretrained_model.fc=nn.Linear(IN_FEATURES, OUTPUT_DIM)
 
 model.load_state_dict(pretrained_model.state_dict())
 
 model = nn.DataParallel(model).cuda()
 
 EPOCHS = 50
-BATCH_SIZE=64
 
 n = len(train_data)  # total number of examples
 n_dev = int(0.3 * n)
@@ -297,10 +371,9 @@ n_list=shuffle(np.arange(n))
 dev_data = torch.utils.data.Subset(train_data, n_list[:n_dev])  # take first 10%
 train_data = torch.utils.data.Subset(train_data, n_list[n_dev:])  # take the rest
 
-
-trainloader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=False)
-devloader = DataLoader(dev_data, batch_size = BATCH_SIZE, shuffle = False)
-testloader = DataLoader(test_data, batch_size = BATCH_SIZE, shuffle = False)
+trainloader = DataLoader(train_data, batch_size=train_config.batch_size, shuffle=False)
+devloader = DataLoader(dev_data, batch_size = dev_config.batch_size, shuffle = False)
+testloader = DataLoader(test_data, batch_size = test_config.batch_size, shuffle = False)
 
 saved_model_name = 'model.ckpt'
 curr_patience = patience = 6
@@ -318,151 +391,111 @@ criterion_cent = CenterLoss(num_classes=OUTPUT_DIM, feat_dim=2048)
 
 optimizer_centloss = optim.Adam(criterion_cent.parameters(), lr = train_config.lr_cent)
 
-for epoch in range(EPOCHS):
+def train(dataloader, config):
     model.train()
-    total_step = len(trainloader)
+    total_step = len(dataloader)
 
-    for batch, (data, labels) in enumerate(trainloader):
+    for batch, (data, labels) in enumerate(dataloader):
         data = data.to(device)
         labels = labels.to(device)
 
         features, outputs = model(data)
         loss_xent = criterion(outputs, labels)
 
-        if train_config.center:
+        if config.center:
             loss_cent = criterion_cent(features, labels)
             loss = loss_xent + loss_cent*train_config.cent_weight
         else:
             loss = loss_xent
 
         optimizer_model.zero_grad()
-        if train_config.center:
+        if config.center:
             optimizer_centloss.zero_grad()
 
         loss.backward()
         optimizer_model.step()
 
-        if train_config.center:
+        if config.center:
             for param in criterion_cent.parameters():
-                param.grad.data *= (1.8 / train_config.cent_weight)
+                param.grad.data *= (config.alpha/config.cent_weight)
             optimizer_centloss.step()
 
         # torch.nn.utils.clip_grad_value_([param for param in model.parameters()
                                                 # if param.requires_grad], 1.0)
 
-    model.eval()
+save_weights_name=DATA_NAME+'-'+str(train_config.center)+'-'+'model.ckpt'
+if train_config.run_type=='train':
 
-    with torch.no_grad():
-        total = 0
-        epoch_val_loss = 0.0
-        epoch_val_acc=0.0
+    for epoch in range(EPOCHS):
+        train(trainloader, train_config)
 
-        for data, labels in devloader:
-            data = data.to(device)
-            labels = labels.to(device)
-            _, outputs= model(data)
+        epoch_val_loss, epoch_val_acc = evaluate(devloader, is_load=False)
 
-            preds = torch.argmax(outputs, dim=1)
+        print('val_loss: {:.3f} | acc: {:.3f}'.format(epoch_val_loss, epoch_val_acc))
+        if epoch_val_loss<best_valid_loss:
+            torch.save(model.state_dict(), save_weights_name)
+            torch.save(optimizer_centloss.state_dict(), 'optim_best.std')
+            best_valid_loss=epoch_val_loss
+            curr_patience = patience
+        else:
+            curr_patience-=1
+            if curr_patience<=-1:
+                model.load_state_dict(torch.load(save_weights_name))
+                optimizer_centloss.load_state_dict(torch.load('optim_best.std'))
+                num_trials-=1
 
-            correct = (preds==labels).sum().item()
+        if num_trials<=0:
+            print('Running out of patience, training finished')
 
-            acc = correct/data.shape[0]
+            epoch_test_loss, epoch_test_acc = evaluate(testloader)
+            print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
 
-            loss = criterion(outputs, labels)
-            epoch_val_loss+=loss
-            epoch_val_acc+=acc
+            epoch_test_acc*=100
+            f=open('results.csv','w')
+            f.write('test_loss\ttest_acc\n')
+            f.write(str(np.round(epoch_test_loss.detach().cpu().numpy(),2))+'\t'+str(np.round(epoch_test_acc,3)))
+            f.close()
 
-        epoch_val_loss/=len(devloader)
-        epoch_val_acc/=len(devloader)
-    print('val_loss: {:.3f} | acc: {:.3f}'.format(epoch_val_loss, 100*acc))
-    if epoch_val_loss<best_valid_loss:
-        torch.save(model.state_dict(), 'model.ckpt')
-        torch.save(optimizer_centloss.state_dict(), 'optim_best.std')
-        best_valid_loss=epoch_val_loss
-        curr_patience = patience
-    else:
-        curr_patience-=1
-        if curr_patience<=-1:
-            model.load_state_dict(torch.load('model.ckpt'))
-            optimizer_centloss.load_state_dict(torch.load('optim_best.std'))
-            num_trials-=1
-    if num_trials<=0:
-        print('Running out of patience, training finished')
+            exit()
+elif train_config.run_type=='test':
+    epoch_test_loss, epoch_test_acc = evaluate(testloader)
+    print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
+    model.load_state_dict(torch.load(save_weights_name))
 
-        model.load_state_dict(torch.load('model.ckpt'))
+    colors={0: 'k', 1:'g', 2: 'y', 3:'b', 4: 'c', 5: 'r', 6: 'm'}
+    colors_flag={0:0,1:0,2:0,3:0,4:0,5:0,6:0}
+    int_label2str={0:'surprise', 1: 'fear', 2:'disgust', 3:'happy', 4:'sad', 5:'anger', 6:'neutral'}
+    if train_config.vis:
+        pca = PCA(n_components=2)
+        deep_feats_list=[]
+        labels_list=[]
 
-        model.eval()
-        with torch.no_grad():
-            total = 0
-            epoch_test_loss = 0.0
-            epoch_test_acc=0.0
+        for features, labels in testloader:
+            # print(features.shape)
+            features=features.to(device)
 
-            for data, labels in testloader:
-                data = data.to(device)
-                labels = labels.to(device)
-                _, outputs= model(data)
+            deep_feats, preds = model(features)
 
-                preds = torch.argmax(outputs, dim=1)
+            deep_feats_list.append(deep_feats[0].detach().cpu().numpy())
+            labels_list.append(labels[0].detach().cpu().numpy())
 
-                correct = (preds==labels).sum().item()
+        pcaed_deep_feats=pca.fit_transform(deep_feats_list)
 
-                acc = correct/data.shape[0]
+        for i in range(pcaed_deep_feats.shape[0]):
+            key_label=int(labels_list[i])
+            if colors_flag[key_label]==0:
+                plt.scatter(pcaed_deep_feats[i,0], pcaed_deep_feats[i,1], marker='o', c=colors[key_label], label=int_label2str[key_label])
+                colors_flag[key_label]=1
+            else:
+                plt.scatter(pcaed_deep_feats[i,0], pcaed_deep_feats[i,1], marker='o', c=colors[key_label])
 
-                loss = criterion(outputs, labels)
-                epoch_test_loss+=loss
-                epoch_test_acc+=acc
-
-            epoch_test_loss/=len(testloader)
-            epoch_test_acc/=len(testloader)
-        print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, 100*epoch_test_acc))
-
-        epoch_test_acc*=100
-        f=open('results.csv','w')
-        f.write('test_loss\ttest_acc\n')
-        f.write(str(np.round(epoch_test_loss.detach().cpu().numpy(),2))+'\t'+str(np.round(epoch_test_acc,3)))
-        f.close()
-
-        exit()
-
-model.load_state_dict(torch.load('model.ckpt'))
-
-model.eval()
-with torch.no_grad():
-    total = 0
-    epoch_test_loss = 0.0
-    epoch_test_acc=0.0
-
-    for data, labels in testloader:
-        data = data.to(device)
-        labels = labels.to(device)
-        _, outputs= model(data)
-
-        preds = torch.argmax(outputs, dim=1)
-
-        correct = (preds==labels).sum().item()
-
-        acc = correct/data.shape[0]
-
-        loss = criterion(outputs, labels)
-        epoch_test_loss+=loss
-        epoch_test_acc+=acc
-
-    epoch_test_loss/=len(testloader)
-    epoch_test_acc/=len(testloader)
-
-epoch_test_acc*=100
-print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
-
-
-f=open('results.csv','w')
-f.write('test_loss\ttest_acc\n')
-f.write(str(np.round(epoch_test_loss.detach().cpu().numpy(),2))+'\t'+str(np.round(epoch_test_acc,3)))
-f.close()
+        plt.legend(prop={'size': 10})
+        plt.show()
+        print(pcaed_deep_feats.shape)
 
 
 
-
-
+#todo: visualize deep features for comparison
 
 
 

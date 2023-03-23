@@ -24,6 +24,10 @@ def get_config(parse=True, **optional_kwargs):
     parser.add_argument('--optimizer', type=str, default='Adam')
     parser.add_argument('--data-folder', type=str, required=True)
     parser.add_argument('--cent-weight', type=float, default=0.2)
+    parser.add_argument('--alpha', type=float, default=1.8)
+    parser.add_argument('--run-type', type=str, default='train')
+    parser.add_argument('--vis', action='store_true')
+    parser.add_argument('--batch-size', type=int, default=64)
 
     if parse:
         kwargs = parser.parse_args()
