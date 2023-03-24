@@ -28,6 +28,10 @@ def get_config(parse=True, **optional_kwargs):
     parser.add_argument('--run-type', type=str, default='train')
     parser.add_argument('--vis', action='store_true')
     parser.add_argument('--batch-size', type=int, default=64)
+    parser.add_argument('--file-mode', default='w')
+    parser.add_argument('--n-epochs', default=50)
+    parser.add_argument('--n-classes', type=int, default=7)
+    parser.add_argument('--patience', type=int, default=6)
 
     if parse:
         kwargs = parser.parse_args()
