@@ -115,26 +115,26 @@ class Solver(object):
             print('val_loss: {:.3f} | acc: {:.3f}'.format(epoch_val_loss, epoch_val_acc))
             if epoch_val_loss<best_valid_loss:
                 torch.save(self.model.state_dict(), self.train_config.save_weights_name)
-                torch.save(optimizer_centloss.state_dict(), 'optim_best.std')
+                torch.save(self.optimizer_centloss.state_dict(), 'optim_best.std')
                 best_valid_loss=epoch_val_loss
                 curr_patience = patience
             else:
                 curr_patience-=1
                 if curr_patience<=-1:
                     self.model.load_state_dict(torch.load(self.train_config.save_weights_name))
-                    optimizer_centloss.load_state_dict(torch.load('optim_best.std'))
+                    self.optimizer_centloss.load_state_dict(torch.load('optim_best.std'))
                     num_trials-=1
 
             if num_trials<=0:
                 print('Running out of patience, training finished')
 
-                epoch_test_loss, epoch_test_acc = evaluate(self.test_data_loader)
+                epoch_test_loss, epoch_test_acc = self.evaluate(self.test_data_loader)
                 print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
 
                 saveResults(test_config, epoch_test_loss, epoch_test_acc)
                 exit()
 
-        epoch_test_loss, epoch_test_acc = evaluate(self.test_data_loader)
+        epoch_test_loss, epoch_test_acc = self.evaluate(self.test_data_loader)
         print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
         self.saveResults(test_config, epoch_test_loss, epoch_test_acc)
 
@@ -160,7 +160,7 @@ class Solver(object):
                 preds = torch.argmax(outputs, dim=1)
 
                 correct += (preds==labels).sum().item()
-                total+=len(dataloader)
+                total+=data.shape[0]
 
                 loss = self.criterion(outputs, labels)
                 epoch_loss += loss
