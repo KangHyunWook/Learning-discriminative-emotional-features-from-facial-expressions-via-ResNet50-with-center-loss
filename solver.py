@@ -36,6 +36,8 @@ class Solver(object):
     def __init__(self, train_config, dev_config, test_config, train_data_loader, dev_data_loader, test_data_loader, is_train=True, model=None):
         self.train_config = train_config
         self.train_data_loader= train_data_loader
+        self.dev_data_loader = dev_data_loader
+        self.test_data_loader = test_data_loader
         self.is_train=is_train
         self.model=model
 
@@ -63,7 +65,7 @@ class Solver(object):
 
         self.optimizer_centloss = self.train_config.optimizer(self.criterion_cent.parameters(), lr = self.train_config.lr_cent)
 
-    def saveResults(config, loss, acc):
+    def saveResults(self, config, loss, acc):
         f=open('results.csv', config.file_mode)
         if config.file_mode=='w':
             f.write('alpha\ttest_loss\ttest_acc\n')
@@ -126,45 +128,46 @@ class Solver(object):
             if num_trials<=0:
                 print('Running out of patience, training finished')
 
-                epoch_test_loss, epoch_test_acc = evaluate(testloader)
+                epoch_test_loss, epoch_test_acc = evaluate(self.test_data_loader)
                 print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
 
                 saveResults(test_config, epoch_test_loss, epoch_test_acc)
                 exit()
 
-        epoch_test_loss, epoch_test_acc = evaluate(testloader)
+        epoch_test_loss, epoch_test_acc = evaluate(self.test_data_loader)
         print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
         self.saveResults(test_config, epoch_test_loss, epoch_test_acc)
 
 
-    def evaluate(dataloader, is_load=True):
+    def evaluate(self, dataloader, is_load=True):
 
         if is_load:
-            model.load_state_dict(torch.load(self.train_config.save_weights_name))
+            self.model.load_state_dict(torch.load(self.train_config.save_weights_name))
 
-        model.eval()
+        self.model.eval()
         with torch.no_grad():
-            total = 0
             epoch_loss = 0.0
             epoch_acc=0.0
 
+            correct=0
+            total=0
+
             for data, labels in dataloader:
-                data = data.to(device)
-                labels = labels.to(device)
-                _, outputs= model(data)
+                data = data.to(self.device)
+                labels = labels.to(self.device)
+                _, outputs= self.model(data)
 
                 preds = torch.argmax(outputs, dim=1)
 
-                correct = (preds==labels).sum().item()
+                correct += (preds==labels).sum().item()
+                total+=len(dataloader)
 
-                acc = correct/data.shape[0]
-
-                loss = criterion(outputs, labels)
+                loss = self.criterion(outputs, labels)
                 epoch_loss += loss
-                epoch_acc += acc
+
 
             epoch_loss/=len(dataloader)
-            epoch_acc/=len(dataloader)
+            epoch_acc= correct/total
 
         epoch_acc*=100
 
