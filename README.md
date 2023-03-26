@@ -19,4 +19,5 @@ Classification accuracy
   <tr align='center'><td>FER2013</td><td>62.079</td><td><b>63.402</b></td></tr>  
 </table>
 
+RAF-DB dataset: http://www.whdeng.cn/raf/model1.html
 FER2013 datset: https://www.kaggle.com/datasets/msambare/fer2013
