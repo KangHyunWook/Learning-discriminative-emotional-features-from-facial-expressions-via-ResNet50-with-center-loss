@@ -115,5 +115,5 @@ if __name__=='__main__':
     elif train_config.run_type=='train':
         solver.train()
     elif train_config.run_type=='test':
-        epoch_test_loss, epoch_test_acc = solver.evaluate(testloader)
-        print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
+        epoch_test_loss, epoch_test_acc, f1 = solver.evaluate(testloader)
+        print('test_loss: {:.3f} | test_acc: {:.3f} | F1: {:.3f}'.format(epoch_test_loss, epoch_test_acc, f1))

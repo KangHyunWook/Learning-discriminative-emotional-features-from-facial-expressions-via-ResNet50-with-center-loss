@@ -140,14 +140,14 @@ class Solver(object):
             if num_trials<=0:
                 print('Running out of patience, training finished')
 
-                epoch_test_loss, epoch_test_acc = self.evaluate(self.test_data_loader)
-                print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
+                epoch_test_loss, epoch_test_acc, f1 = self.evaluate(self.test_data_loader)
+                print('test_loss: {:.3f} | test_acc: {:.3f} f1: {:.3f}'.format(epoch_test_loss, epoch_test_acc, f1))
 
                 self.saveResults(self.test_config, epoch_test_loss, epoch_test_acc)
                 exit()
 
-        epoch_test_loss, epoch_test_acc = self.evaluate(self.test_data_loader)
-        print('test_loss: {:.3f} | test_acc: {:.3f}'.format(epoch_test_loss, epoch_test_acc))
+        epoch_test_loss, epoch_test_acc, f1 = self.evaluate(self.test_data_loader)
+        print('test_loss: {:.3f} | test_acc: {:.3f} f1: {:.3f}'.format(epoch_test_loss, epoch_test_acc, f1))
         self.saveResults(self.test_config, epoch_test_loss, epoch_test_acc)
 
     def evaluate(self, dataloader, is_load=True):
@@ -200,7 +200,6 @@ class Solver(object):
 
             conf_mat = conf_mat / row_wise_sum
             conf_mat=np.round(conf_mat, 2)
-
 
             df_cm = pd.DataFrame(conf_mat, index = columns,
                               columns = columns)
