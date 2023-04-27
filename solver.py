@@ -30,7 +30,9 @@ class CenterLoss(nn.Module):
         distmat = torch.pow(x, 2).sum(dim=1, keepdim=True).expand(batch_size, self.num_classes) + \
                   torch.pow(self.centers, 2).sum(dim=1, keepdim=True).expand(self.num_classes,
                                                                                     batch_size).t()
-        distmat.addmm_(x, self.centers.t(), beta=1, alpha=-2)
+#         distmat.addmm_(x, self.centers.t(), beta=1, alpha=-2)
+
+        distmat = 1*distmat + -2*torch.dot(x,self.centers.t())
 
         classes = torch.arange(self.num_classes).long()
         classes = classes.cuda()
