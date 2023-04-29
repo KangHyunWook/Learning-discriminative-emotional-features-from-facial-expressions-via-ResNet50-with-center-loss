@@ -7,7 +7,7 @@ Background: Although existing deep learning have inter-class variance using soft
 
 To avoid intra-class variance and ensure both intra-class compactness and inter-class variance, the distance between the center and its corresponding deep features is penalized by the center loss, which has been first introduced by Wen et al.
 
-This code trains the ResNet50 under the joint supervision of softmax and center loss. As a result, the deep features effectively cluster to their respective centers as shown in the right figure.
+This code trains the ResNet50 under the joint supervision of softmax and center loss. As a result, the deep features are effectively clustered to their respective centers as shown in the right figure above.
 
 run as follows:
 ```
