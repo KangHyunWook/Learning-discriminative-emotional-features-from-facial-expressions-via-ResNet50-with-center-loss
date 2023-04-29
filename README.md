@@ -29,6 +29,6 @@ Classification accuracy
 RAF-DB dataset: http://www.whdeng.cn/raf/model1.html <br />
 FER2013 datset: https://www.kaggle.com/datasets/msambare/fer2013
 
-<b>References<b>:
+<b>References</b>:
 
 Wen, Y., Zhang, K., Li, Z., & Qiao, Y. (2016). A discriminative feature learning approach for deep face recognition. In Computer Vision–ECCV 2016: 14th European Conference, Amsterdam, The Netherlands, October 11–14, 2016, Proceedings, Part VII 14 (pp. 499-515). Springer International Publishing.
