@@ -1,11 +1,11 @@
 
 <h1>Learning discriminative emotional features from facial expressions via ResNet50 with center loss</h1>
 
-Background: Existing deep learning models suffer from intra-class vairance when they do label predictions using softmax function as illustrated in the left figure below.
+Background: Although existing deep learning have inter-class variance using softmax function, they suffer from intra-class variance when they do label predictions as illustrated in the left figure below.
 
 ![alt text](https://github.com/KangHyunWook/Learning-discriminative-emotional-features-from-facial-expressions-via-ResNet50-with-center-loss/blob/main/Screenshot%20from%202023-04-29%2009-51-51.png)
 
-To make less intra-class variance, center loss has been first introduced by Wen et al.
+To avoid intra-class variance and ensure both intra-class compactness and inter-class variance, the distance between the center and its corresponding deep features is penalized by the center loss, which has been first introduced by Wen et al.
 
 This code trains the ResNet50 under the joint supervision of softmax and center loss. As a result, the deep features cluster to their respective centers as shown in the right figure.
 
