@@ -4,7 +4,7 @@
 
 Background: Existing label predictions using softmax function suffers from intra-class vairance as in the left figure below.
 
-![alt text]file:///home/jeff/Pictures/Screenshot%20from%202023-04-29%2009-51-51.png
+![alt text](https://github.com/KangHyunWook/Learning-discriminative-emotional-features-from-facial-expressions-via-ResNet50-with-center-loss/blob/main/Screenshot%20from%202023-04-29%2009-51-51.png)
 
 To make less intra-class variance, center loss has been first introduced by Wen et al.
 
