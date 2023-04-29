@@ -2,6 +2,14 @@
 
 <h1>Learning discriminative emotional features from facial expressions via ResNet50 with center loss</h1>
 
+Background: Existing label predictions using softmax function suffers from intra-class vairance as in the left figure below.
+
+file:///home/jeff/Pictures/Screenshot%20from%202023-04-29%2009-51-51.png
+
+To make less intra-class variance, center loss has been first introduced by Wen et al.
+
+This code trains the ResNet50 under the joint supervision of softmax and center loss.
+
 run as follows:
 ```
 python main.py
@@ -21,3 +29,7 @@ Classification accuracy
 
 RAF-DB dataset: http://www.whdeng.cn/raf/model1.html <br />
 FER2013 datset: https://www.kaggle.com/datasets/msambare/fer2013
+
+References:
+
+Wen, Y., Zhang, K., Li, Z., & Qiao, Y. (2016). A discriminative feature learning approach for deep face recognition. In Computer Vision–ECCV 2016: 14th European Conference, Amsterdam, The Netherlands, October 11–14, 2016, Proceedings, Part VII 14 (pp. 499-515). Springer International Publishing.
