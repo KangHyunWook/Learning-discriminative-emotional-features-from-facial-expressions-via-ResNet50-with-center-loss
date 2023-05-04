@@ -36,7 +36,7 @@ class CenterLoss(nn.Module):
         centers = centers.sum(dim=1, keepdim = True)
         centers = centers.expand(self.num_classes, batch_size).t()
 
-        distmat+=centers
+        distmat= distmat+centers
 
         distmat = 1*distmat + -2*torch.matmul(x,self.centers.t())
 
