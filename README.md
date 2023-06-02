@@ -27,7 +27,7 @@ Classification accuracy
 </table>
 
 RAF-DB dataset: http://www.whdeng.cn/raf/model1.html <br />
-FER2013 datset: https://www.kaggle.com/datasets/msambare/fer2013
+FER2013 dataset: https://www.kaggle.com/datasets/msambare/fer2013
 
 <b>References</b>:
 
